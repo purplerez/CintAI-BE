@@ -41,6 +41,7 @@ class GradingService
         $totalWeight = $testCases->sum('weight') ?: 1;
         $earnedWeight = 0;
         $lastRunResult = null;
+        $totalTimeMs = 0;
 
         // Run all test cases — workDir stays intact across all runs
         try {
@@ -62,6 +63,8 @@ class GradingService
                     $earnedWeight += $testCase->weight;
                 }
 
+                $totalTimeMs += $runResult['time_ms'] ?? 0;
+
                 if (!$testCase->is_hidden) {
                     $results[] = [
                         'case_id'  => $testCase->id,
@@ -79,7 +82,18 @@ class GradingService
             $this->sandbox->cleanupWorkDir($compileResult['work_dir']);
         }
 
-        $score = $totalWeight > 0 ? round(($earnedWeight / $totalWeight) * $problem->max_score, 2) : 0;
+        $baseScore = $totalWeight > 0 ? ($earnedWeight / $totalWeight) * $problem->max_score : 0;
+        
+        // Time efficiency calculation: 
+        // Kurangi skor berdasarkan waktu eksekusi agar siswa dengan logika lebih efisien mendapat nilai lebih tinggi.
+        // Penalti maksimal 5 poin (e.g. jika program sangat lambat mendekati time limit).
+        // Setiap 100ms dipotong 0.1 poin.
+        if ($baseScore > 0) {
+            $timePenalty = min(5, ($totalTimeMs / 1000));
+            $score = round($baseScore - $timePenalty, 2);
+        } else {
+            $score = 0;
+        }
 
         // Logic/hardcode detection
         $logicAnalysis = $this->analyzeLogic($submission->code, $testCases->first()?->expected_output);
