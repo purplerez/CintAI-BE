@@ -42,6 +42,26 @@ class AuthController extends Controller
         ]);
     }
 
+    public function register(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'name'           => 'required|string|max:255',
+            'email'          => 'required|email|unique:users,email',
+            'password'       => 'required|string|min:8|confirmed',
+            'student_number' => 'nullable|string|max:50|unique:users,student_number',
+        ]);
+
+        $data['password'] = Hash::make($data['password']);
+        $data['is_active'] = true;
+
+        $user = User::create($data);
+        $user->assignRole('siswa');
+
+        return response()->json([
+            'message' => 'Akun berhasil dibuat. Silakan login.',
+        ], 201);
+    }
+
     public function logout(Request $request): JsonResponse
     {
         $request->user()->currentAccessToken()->delete();
