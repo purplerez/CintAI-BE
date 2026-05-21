@@ -38,7 +38,7 @@ class DashboardController extends Controller
 
         // Top students by total score accumulation
         $ranking = Submission::whereHas('problem', fn($q) => $q->whereIn('class_id', $classIds))
-            ->select('student_id', DB::raw('SUM(score) as total_score'), DB::raw('COUNT(*) as total'))
+            ->select('student_id', DB::raw('SUM(score) as total_score'), DB::raw('AVG(score) as avg_score'), DB::raw('COUNT(*) as total'))
             ->with('student:id,name')
             ->groupBy('student_id')
             ->orderByDesc('total_score')
@@ -70,7 +70,7 @@ class DashboardController extends Controller
             ->get()
             ->map(fn($t) => [
                 'topic'     => $t->topic,
-                'fail_rate' => round(($t->failed / $t->total) * 100),
+                'fail_rate' => $t->total > 0 ? round(((float)$t->failed / (float)$t->total) * 100) : 0,
                 'total'     => $t->total,
             ]);
 

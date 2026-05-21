@@ -39,6 +39,7 @@ Route::middleware(['auth:sanctum', 'activity.logger'])->group(function () {
             Route::get('/',                                    [ClassController::class, 'index']);
             Route::post('/',                                   [ClassController::class, 'store']);
             Route::put('/{class}',                             [ClassController::class, 'update']);
+            Route::delete('/{class}',                          [ClassController::class, 'destroy']);
             Route::delete('/{class}/students/{studentId}',     [ClassController::class, 'removeStudent']);
             Route::get('/{class}/gradebook',                   [\App\Http\Controllers\Admin\GradebookController::class, 'index']);
         });
@@ -53,8 +54,9 @@ Route::middleware(['auth:sanctum', 'activity.logger'])->group(function () {
             Route::post('/',                       [CodingController::class, 'store']);
             Route::put('/{problem}',               [CodingController::class, 'update']);
             Route::delete('/{problem}',            [CodingController::class, 'destroy']);
-            Route::post('/{problem}/test-cases',   [CodingController::class, 'storeTestCase']);
-            Route::get('/{problem}/submissions',   [CodingController::class, 'problemSubmissions']); // Guru view all subs
+            Route::post('/{problem}/test-cases',                   [CodingController::class, 'storeTestCase']);
+            Route::delete('/{problem}/test-cases/{testCase}',      [CodingController::class, 'destroyTestCase']);
+            Route::get('/{problem}/submissions',                   [CodingController::class, 'problemSubmissions']); // Guru view all subs
         });
     });
 

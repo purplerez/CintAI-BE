@@ -56,6 +56,16 @@ class ClassController extends Controller
         return response()->json($class);
     }
 
+    // Guru: delete class
+    public function destroy(Request $request, SchoolClass $class): JsonResponse
+    {
+        if (!$request->user()->hasAnyRole(['guru', 'admin'])) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+        $class->delete();
+        return response()->json(['message' => 'Kelas berhasil dihapus.']);
+    }
+
     // Guru: list students
     public function students(SchoolClass $class): JsonResponse
     {

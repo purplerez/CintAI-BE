@@ -39,9 +39,13 @@ class CodingController extends Controller
         return response()->json($problems);
     }
 
-    public function show(CodingProblem $problem): JsonResponse
+    public function show(Request $request, CodingProblem $problem): JsonResponse
     {
-        $problem->load(['sampleTestCases', 'creator']);
+        if ($request->user() && $request->user()->hasAnyRole(['guru', 'admin'])) {
+            $problem->load(['testCases', 'creator']);
+        } else {
+            $problem->load(['sampleTestCases', 'creator']);
+        }
         return response()->json($problem);
     }
 
@@ -144,6 +148,18 @@ class CodingController extends Controller
         $data['weight'] = $data['weight'] ?? 1;
         $tc = $problem->testCases()->create($data);
         return response()->json($tc, 201);
+    }
+
+    public function destroyTestCase(Request $request, CodingProblem $problem, \App\Models\TestCase $testCase): JsonResponse
+    {
+        if (!$request->user()->hasAnyRole(['guru', 'admin'])) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+        if ($testCase->problem_id !== $problem->id) {
+            return response()->json(['message' => 'Test case tidak valid.'], 400);
+        }
+        $testCase->delete();
+        return response()->json(['message' => 'Test case berhasil dihapus.']);
     }
 
     // ── Run Code (non-graded) ──────────────────────────────────
