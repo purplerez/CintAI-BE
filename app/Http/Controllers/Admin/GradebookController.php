@@ -51,18 +51,26 @@ class GradebookController extends Controller
         $problemIds  = $problems->pluck('id');
         $studentIds  = $students->pluck('id');
 
-        // Best submission per (student, problem) — highest score
+        // Best submission per (student, problem)
         $submissions = Submission::whereIn('student_id', $studentIds)
             ->whereIn('problem_id', $problemIds)
-            ->select('student_id', 'problem_id',
-                DB::raw('MAX(score) as best_score'),
-                DB::raw('MAX(CASE WHEN status = "accepted" THEN 1 ELSE 0 END) as has_accepted'),
-                DB::raw('COUNT(*) as attempts'),
-                DB::raw('MIN(status) as status') // fallback status
-            )
-            ->groupBy('student_id', 'problem_id')
+            ->orderBy('id', 'desc')
             ->get()
-            ->keyBy(fn($s) => "{$s->student_id}_{$s->problem_id}");
+            ->groupBy(fn($s) => "{$s->student_id}_{$s->problem_id}")
+            ->map(function ($group) {
+                $latest = $group->first();
+                $attempts = $group->count();
+                
+                // Jika 2 atau lebih kali submit, simpan nilai terakhir.
+                $scoreToUse = $attempts >= 2 ? $latest->score : $group->max('score');
+
+                return (object) [
+                    'best_score'   => $scoreToUse,
+                    'has_accepted' => $group->contains('status', 'accepted') ? 1 : 0,
+                    'attempts'     => $attempts,
+                    'status'       => $latest->status,
+                ];
+            });
 
         // Build student rows
         $rows = $students->map(function ($student) use ($problems, $submissions) {

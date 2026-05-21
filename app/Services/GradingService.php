@@ -84,13 +84,22 @@ class GradingService
 
         $baseScore = $totalWeight > 0 ? ($earnedWeight / $totalWeight) * $problem->max_score : 0;
         
+        // Hitung jumlah submit salah sebelumnya untuk soal ini oleh siswa ini
+        $previousWrongAttempts = Submission::where('student_id', $submission->student_id)
+            ->where('problem_id', $submission->problem_id)
+            ->where('id', '<', $submission->id)
+            ->where('status', '!=', 'accepted')
+            ->count();
+
         // Time efficiency calculation: 
         // Kurangi skor berdasarkan waktu eksekusi agar siswa dengan logika lebih efisien mendapat nilai lebih tinggi.
         // Penalti maksimal 5 poin (e.g. jika program sangat lambat mendekati time limit).
         // Setiap 100ms dipotong 0.1 poin.
+        // Penalti tambahan: -5 poin untuk setiap kali submit salah sebelumnya.
         if ($baseScore > 0) {
             $timePenalty = min(5, ($totalTimeMs / 1000));
-            $score = round($baseScore - $timePenalty, 2);
+            $wrongAttemptPenalty = $previousWrongAttempts * 5;
+            $score = round(max(0, $baseScore - $timePenalty - $wrongAttemptPenalty), 2);
         } else {
             $score = 0;
         }
