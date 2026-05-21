@@ -36,12 +36,12 @@ class DashboardController extends Controller
             ->where('status', 'accepted')->count();
         $avgProgress = $totalSubs > 0 ? round(($acceptedSubs / $totalSubs) * 100, 1) : 0;
 
-        // Top students by avg score
+        // Top students by total score accumulation
         $ranking = Submission::whereHas('problem', fn($q) => $q->whereIn('class_id', $classIds))
-            ->select('student_id', DB::raw('AVG(score) as avg_score'), DB::raw('COUNT(*) as total'))
+            ->select('student_id', DB::raw('SUM(score) as total_score'), DB::raw('COUNT(*) as total'))
             ->with('student:id,name')
             ->groupBy('student_id')
-            ->orderByDesc('avg_score')
+            ->orderByDesc('total_score')
             ->limit(10)
             ->get();
 

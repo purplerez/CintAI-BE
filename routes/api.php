@@ -69,6 +69,7 @@ Route::middleware(['auth:sanctum', 'activity.logger'])->group(function () {
     Route::prefix('submissions')->group(function () {
         Route::get('/', [CodingController::class, 'mySubmissions']);
         Route::get('/{submission}/status', [CodingController::class, 'submissionStatus']);
+        Route::get('/{submission}/view', [CodingController::class, 'getSubmissionWithCode'])->middleware('role:guru|admin');
     });
 
     // ── Web Project Sandbox ───────────────────────────────────

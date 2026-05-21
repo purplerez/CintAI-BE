@@ -202,6 +202,36 @@ class CodingController extends Controller
         ]));
     }
 
+    // ── Get Submission with Code (Guru/Admin) ──────────────────
+    public function getSubmissionWithCode(Request $request, Submission $submission): JsonResponse
+    {
+        if (!$request->user()->hasAnyRole(['guru', 'admin'])) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        $submission->load([
+            'student:id,name,email,student_number',
+            'problem:id,title,description,topic,difficulty',
+        ]);
+
+        return response()->json([
+            'id'                   => $submission->id,
+            'code'                 => $submission->code,
+            'language'             => $submission->language,
+            'status'               => $submission->status,
+            'score'                => $submission->score,
+            'passed_cases'         => $submission->passed_cases,
+            'total_cases'          => $submission->total_cases,
+            'execution_time_ms'    => $submission->execution_time_ms,
+            'memory_used_kb'       => $submission->memory_used_kb,
+            'test_case_results'    => $submission->test_case_results,
+            'compile_error'        => $submission->compile_error,
+            'created_at'           => $submission->created_at,
+            'student'              => $submission->student,
+            'problem'              => $submission->problem,
+        ]);
+    }
+
     // ── My Submissions ────────────────────────────────────────
     public function mySubmissions(Request $request): JsonResponse
     {
